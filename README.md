@@ -1,65 +1,55 @@
-# Site Check（Webサイト診断ツール）
+# Site Check — Frontend (React)
 
-URLを入れると、SEO・セキュリティ・パフォーマンス（PageSpeed Insights連携時）を診断し、
-前回結果との差分・履歴つきでレポートするツールです。
+Webサイト診断ツール「Site Check」のフロントエンドです。
+URLを入力すると、[バックエンドAPI](https://github.com/yukisatodev/site-check-backend-)にリクエストを送り、
+SEO・セキュリティ・パフォーマンスのスコアと改善提案を表示します。
 
-## 構成
+- バックエンド: [site-check-backend](https://github.com/yukisatodev/site-check-backend-)
+- 公開URL: https://effulgent-dodol-5d27d4.netlify.app/
 
-```
-web-diagnostic-tool/       ← バックエンド（FastAPI）
-  app/
-    main.py                ← APIエンドポイント
-    database.py             ← SQLiteモデル（DATABASE_URLでクラウドDBに差し替え可）
-    diagnostics.py          ← 診断ロジック本体
-  requirements.txt
+## 作った背景
 
-web-diagnostic-frontend/   ← フロントエンド（React + Vite）
-  src/
-    App.jsx                ← メイン画面
-    ScoreGauge.jsx          ← スコアの円グラフ
-    FindingsList.jsx        ← SEO/セキュリティの指摘事項一覧
-    api.js                  ← バックエンドAPIとの通信
-```
+このツールは、企業向けにDX推進・Web構築を支援してきた実務経験をもとに、「診断して終わり」ではなく「次に何をすべきか」まで返すことを目指して作りました。バックエンド側の詳しい制作背景は[site-check-backendのREADME](https://github.com/yukisatodev/site-check-backend-)にまとめています。
+
+フロントエンドはReact + Viteで構築し、[ポートフォリオサイト](https://yukisatodev.github.io/)と同じ配色・フォントを使うことで、自分のプロダクトとしての一貫したブランドイメージになるよう意識しました。
+
+## 画面の構成
+
+- URL入力フォーム
+- スコア表示（パフォーマンス / SEO / セキュリティ）を、SVGで自作した円形ゲージで表示
+- 前回診断との差分をバッジ表示（▲改善 / ▼悪化）
+- 改善提案の一覧（問題があった項目ごとに、具体的な対応方法を表示）
+- PDFレポートのダウンロードリンク
+
+## 技術選定の理由
+
+| 技術 | 採用理由 |
+|---|---|
+| React + Vite | 学習中の技術をそのまま実務レベルのプロダクトに落とし込むため。Viteはビルドが速く、開発中のフィードバックループを短くできる |
+| 素のCSS（フレームワークなし） | ポートフォリオサイトと共通のデザイントークン（色・フォント）を、外部ライブラリに縛られず細かく調整できるようにするため |
+| Fetch API | 追加の通信ライブラリを持ち込まず、バックエンドAPIとの通信をシンプルに保つため |
+
+スコアのゲージ表示は、外部のグラフライブラリを使わず、SVGの`stroke-dasharray`を使って自前で実装しています。ポートフォリオサイトのスキルレーダーチャートを作った経験を、そのまま別プロダクトに転用した形です。
 
 ## ローカルで動かす
 
-### 1. バックエンド
-
 ```bash
-cd web-diagnostic-tool
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-`http://127.0.0.1:8000/docs` でAPIを直接試せます。
-
-パフォーマンス計測をしたい場合は、[Google PageSpeed Insights API](https://developers.google.com/speed/docs/insights/v5/get-started)
-のAPIキーを取得し、環境変数 `PAGESPEED_API_KEY` に設定してください（未設定でもSEO・セキュリティ診断は動きます）。
-
-### 2. フロントエンド
-
-```bash
-cd web-diagnostic-frontend
 npm install
 npm run dev
 ```
 
-`http://127.0.0.1:5173` が開きます。バックエンドのURLを変えたい場合は `.env` に
+`http://127.0.0.1:5173` が開きます。バックエンドのURLを変更したい場合は、`.env`に以下を設定してください。
 
 ```
 VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
 
-を書いてください。
+## デプロイ
 
-## デプロイの目安
+Netlifyで`npm run build`の`dist/`を公開しています。環境変数`VITE_API_BASE_URL`に、本番のバックエンドURL（Render）を設定する必要があります（ビルド時に埋め込まれるため、値を変更した場合は再デプロイが必須です）。
 
-- バックエンド: Render / Railway の無料枠（常時起動が必要なため、GitHub Pages/Netlifyのような静的ホスティングでは動きません）
-- フロントエンド: Vercel / Netlify / GitHub Pages（`npm run build` の `dist/` を公開）
-- DB: そのままSQLiteでもよいが、無料クラウドはディスクが揮発することが多いので、永続化したい場合はTurso等への切り替えを推奨（`DATABASE_URL`環境変数を差し替えるだけで対応できる構成にしてある）
+## 今後やりたいこと
 
-## 次にやると良さそうなこと
-
-- PDFレポート出力（WeasyPrintでHTML→PDF）
-- 履歴のグラフ表示（フロントに`/api/history/{url}`を使ったチャートを追加）
-- 診断項目の追加（robots.txt / sitemap.xml の有無など）
+- 診断履歴のグラフ表示
+- ダークモード以外のテーマ切り替え
+- モバイル表示のさらなる最適化
