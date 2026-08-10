@@ -25,6 +25,7 @@ function FindingsGroup({ title, labels, data }) {
               <span className="icon">{item.ok ? '✓' : '!'}</span>
               <span className="label">{label}</span>
               {item.note && <span className="note">{item.note}</span>}
+              {item.suggestion && <span className="suggestion">💡 {item.suggestion}</span>}
             </li>
           )
         })}
@@ -33,12 +34,38 @@ function FindingsGroup({ title, labels, data }) {
   )
 }
 
+function collectSuggestions(details) {
+  const all = []
+  for (const group of ['seo', 'security']) {
+    const data = details?.[group]
+    if (!data) continue
+    for (const item of Object.values(data)) {
+      if (item?.suggestion) all.push(item.suggestion)
+    }
+  }
+  return all
+}
+
 export default function FindingsList({ details }) {
   if (!details) return null
+  const suggestions = collectSuggestions(details)
+
   return (
-    <div className="findings">
-      <FindingsGroup title="SEO" labels={SEO_LABELS} data={details.seo} />
-      <FindingsGroup title="セキュリティ" labels={SECURITY_LABELS} data={details.security} />
-    </div>
+    <>
+      {suggestions.length > 0 && (
+        <div className="recommendations">
+          <h3 className="findings-title">改善提案</h3>
+          <ol className="recommendations-list">
+            {suggestions.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+      <div className="findings">
+        <FindingsGroup title="SEO" labels={SEO_LABELS} data={details.seo} />
+        <FindingsGroup title="セキュリティ" labels={SECURITY_LABELS} data={details.security} />
+      </div>
+    </>
   )
 }
