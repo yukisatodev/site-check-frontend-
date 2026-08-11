@@ -22,10 +22,17 @@ function FindingsGroup({ title, labels, data }) {
           if (!item) return null
           return (
             <li key={key} className={item.ok ? 'ok' : 'warn'}>
-              <span className="icon">{item.ok ? '✓' : '!'}</span>
-              <span className="label">{label}</span>
-              {item.note && <span className="note">{item.note}</span>}
-              {item.suggestion && <span className="suggestion">💡 {item.suggestion}</span>}
+              <span className="icon-circle">{item.ok ? '✓' : '!'}</span>
+              <div className="finding-body">
+                <span className="label">{label}</span>
+                {item.note && <span className="note">{item.note}</span>}
+                {item.suggestion && (
+                  <div className="suggestion">
+                    <span className="suggestion-mark mono">FIX</span>
+                    {item.suggestion}
+                  </div>
+                )}
+              </div>
             </li>
           )
         })}
@@ -54,10 +61,10 @@ export default function FindingsList({ details }) {
     <>
       {suggestions.length > 0 && (
         <div className="recommendations">
-          <h3 className="findings-title">改善提案</h3>
+          <h3 className="findings-title"><span className="pulse-dot small" />改善提案</h3>
           <ol className="recommendations-list">
             {suggestions.map((s, i) => (
-              <li key={i}>{s}</li>
+              <li key={i}><span className="rec-num mono">{String(i + 1).padStart(2, '0')}</span>{s}</li>
             ))}
           </ol>
         </div>
