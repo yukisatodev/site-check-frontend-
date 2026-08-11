@@ -1,11 +1,20 @@
-const RADIUS = 44
+import { useEffect, useRef, useState } from 'react'
+
+const RADIUS = 46
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
-function scoreColor(score) {
-  if (score === null || score === undefined) return 'var(--line-strong)'
-  if (score >= 90) return 'var(--gold)'
-  if (score >= 50) return 'var(--steel)'
-  return 'var(--warn)'
+function scoreTier(score) {
+  if (score === null || score === undefined) return 'none'
+  if (score >= 90) return 'great'
+  if (score >= 50) return 'ok'
+  return 'warn'
+}
+
+const TIER_COLOR = {
+  great: 'var(--gold)',
+  ok: 'var(--steel)',
+  warn: 'var(--warn)',
+  none: 'var(--line-strong)',
 }
 
 function DiffBadge({ diff }) {
@@ -21,28 +30,50 @@ function DiffBadge({ diff }) {
 
 export default function ScoreGauge({ label, score, diff }) {
   const hasScore = score !== null && score !== undefined
-  const progress = hasScore ? Math.max(0, Math.min(100, score)) : 0
-  const offset = CIRCUMFERENCE * (1 - progress / 100)
+  const target = hasScore ? Math.max(0, Math.min(100, score)) : 0
+  const [display, setDisplay] = useState(0)
+  const rafRef = useRef(null)
+
+  useEffect(() => {
+    if (!hasScore) { setDisplay(0); return }
+    const duration = 900
+    const start = performance.now()
+    const from = 0
+
+    function tick(now) {
+      const t = Math.min(1, (now - start) / duration)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setDisplay(Math.round(from + (target - from) * eased))
+      if (t < 1) rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, hasScore])
+
+  const offset = CIRCUMFERENCE * (1 - display / 100)
+  const tier = scoreTier(score)
 
   return (
-    <div className="gauge-card">
-      <svg viewBox="0 0 110 110" className="gauge-svg">
-        <circle cx="55" cy="55" r={RADIUS} className="gauge-track" />
+    <div className={`gauge-card tier-${tier}`}>
+      <div className="gauge-glow" aria-hidden="true" />
+      <svg viewBox="0 0 120 120" className="gauge-svg">
+        <circle cx="60" cy="60" r={RADIUS} className="gauge-track" />
         <circle
-          cx="55"
-          cy="55"
+          cx="60"
+          cy="60"
           r={RADIUS}
           className="gauge-fill"
           style={{
-            stroke: scoreColor(score),
+            stroke: TIER_COLOR[tier],
             strokeDasharray: CIRCUMFERENCE,
             strokeDashoffset: hasScore ? offset : CIRCUMFERENCE,
           }}
         />
-        <text x="55" y="52" textAnchor="middle" className="gauge-number">
-          {hasScore ? progress : '—'}
+        <text x="60" y="57" textAnchor="middle" className="gauge-number">
+          {hasScore ? display : '—'}
         </text>
-        <text x="55" y="70" textAnchor="middle" className="gauge-unit">
+        <text x="60" y="76" textAnchor="middle" className="gauge-unit">
           {hasScore ? '/ 100' : '未計測'}
         </text>
       </svg>
