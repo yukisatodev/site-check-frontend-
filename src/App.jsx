@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { diagnose, reportUrl } from './api.js'
 import ScoreGauge from './ScoreGauge.jsx'
 import FindingsList from './FindingsList.jsx'
@@ -8,6 +8,8 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
+  const [scanning, setScanning] = useState(false)
+  const resultsRef = useRef(null)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -21,6 +23,9 @@ export default function App() {
       const normalized = /^https?:\/\//.test(url.trim()) ? url.trim() : `https://${url.trim()}`
       const data = await diagnose(normalized)
       setResult(data)
+      setScanning(true)
+      setTimeout(() => setScanning(false), 1100)
+      setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
     } catch (err) {
       setError(err.message || '診断中に問題が発生しました。URLを確認してもう一度お試しください。')
     } finally {
@@ -29,15 +34,18 @@ export default function App() {
   }
 
   return (
-    <div className="page">
+    <div className="page texture">
       <header className="hero">
-        <div className="eyebrow">SATOLAB. / SITE CHECK</div>
+        <span className="corner corner-tl" aria-hidden="true" />
+        <span className="corner corner-br" aria-hidden="true" />
+        <div className="eyebrow"><span className="pulse-dot" />SATOLAB. / SITE CHECK</div>
         <h1>あなたのサイト、<br />健康診断しませんか。</h1>
         <p className="hero-sub">
-          URLを入力するだけで、SEO・セキュリティ・パフォーマンスの基本項目を無料でチェックします。
+          URLを入力するだけで、SEO・セキュリティ・パフォーマンスの基本項目を無料でチェックし、改善提案まで返します。
         </p>
 
         <form className="url-form" onSubmit={handleSubmit}>
+          <span className="url-form-icon mono">https://</span>
           <input
             type="text"
             inputMode="url"
@@ -47,23 +55,31 @@ export default function App() {
             aria-label="診断したいサイトのURL"
           />
           <button type="submit" disabled={loading}>
-            {loading ? '診断中…' : '診断する'}
+            <span className={loading ? 'btn-scanning' : ''}>{loading ? '診断中…' : '診断する'}</span>
           </button>
         </form>
 
         {error && <p className="error-message" role="alert">{error}</p>}
       </header>
 
+      {loading && (
+        <div className="scan-track" aria-hidden="true">
+          <div className="scan-beam" />
+        </div>
+      )}
+
       {result && (
-        <section className="results">
+        <section className={`results ${scanning ? 'is-scanning' : ''}`} ref={resultsRef}>
+          {scanning && <div className="results-scan-line" aria-hidden="true" />}
+
           <div className="results-meta mono">
-            <span>{result.url}</span>
+            <span className="results-url">{result.url}</span>
             <span>{new Date(result.checked_at).toLocaleString('ja-JP')}</span>
           </div>
 
           <div className="report-download">
             <a href={reportUrl(result.id)} className="download-button" download>
-              PDFでダウンロード
+              <span>↓</span> PDFでダウンロード
             </a>
           </div>
 
@@ -82,7 +98,9 @@ export default function App() {
           </div>
 
           {result.previous && (
-            <p className="compare-note">前回の診断結果と比較しています。</p>
+            <p className="compare-note">
+              <span className="compare-dot" />前回の診断結果と比較しています
+            </p>
           )}
 
           <FindingsList details={result.details} />
@@ -95,6 +113,10 @@ export default function App() {
           <div className="skeleton-bar short" />
         </div>
       )}
+
+      <footer className="site-footer mono">
+        <span>SATOLAB. SITE CHECK</span>
+      </footer>
     </div>
   )
 }
