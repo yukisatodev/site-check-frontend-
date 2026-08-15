@@ -5,6 +5,10 @@ Webサイト診断ツール「Site Check」のフロントエンドです。URL�
 - 公開URL: https://effulgent-dodol-5d27d4.netlify.app/
 - バックエンド: [site-check-backend](https://github.com/yukisatodev/site-check-backend-)（診断ロジック・API仕様はこちらに記載）
 
+![Site Check トップ画面](./docs/screenshot-hero.png)
+
+![Site Check 診断結果画面（スコア・改善提案・チェックリスト）](./docs/screenshot-results.png)
+
 ---
 
 ## 1. 背景
